@@ -1,0 +1,9 @@
+{
+  "name": "agent-workflow",
+  "description": "Agentic workflow",
+  "version": "1.0.0",
+  "author": {
+    "name": "woodbusy",
+    "email": "woodbusy@gmail.com"
+  }
+}
