@@ -8,18 +8,18 @@ All artifacts live in the `.worktree-local/` directory within the worktree.
 
 | Artifact | Purpose |
 |----------|---------|
-| `context.md` | Essential context on the worktree's purpose (50–200 words). Read by every agent as a starting point. |
-| `context_detail.md` | Goals, scope, and constraints for the worktree (200–500 words). Read by agents that need deeper context. |
+| `context.md` | Essential context on the worktree's purpose (50-200 words). Read by every agent as a starting point. |
+| `context_detail.md` | Goals, scope, and constraints for the worktree (200-500 words). Read by agents that need deeper context. |
 | `plan.md` | Step-by-step implementation plan. |
 | `implementation_guide.md` | Summary of what was changed and why: technical approach, trade-offs, gaps, warnings, gotchas. Lets implementing agents communicate with future agents working on the same code. |
 
 ## Workflow Overview
 
 ```
-Step 0 ──→ Step 1 ──→ Step 2 ──→ Step 3 ──→ Step 4
-Manual      Plan      Implement   Review     PR
-             ↕
-        [User Approval]
+Step 0 --> Step 1 --> Step 2 --> Step 3 --> Step 4
+Manual     Plan      Implement   Review     PR
+            |
+       [User Approval]
 ```
 
 ### Step 0: Worktree Setup (Manual)
@@ -50,7 +50,7 @@ Three sub-steps run sequentially.
 
 **Agent:** Implementer
 
-The Implementer reads the plan and determines how to group changes into logical commits. It creates tasks for the work, implements the code, and writes the implementation guide.
+The Implementer reads the plan and determines how to group changes into logical commits. It implements the code and writes the implementation guide.
 
 If the Implementer discovers the plan is infeasible during implementation, it may make minor adaptations and document them. For significant deviations that change scope or approach, it stops and reports the issue to the orchestrator.
 
@@ -73,7 +73,7 @@ The orchestrator evaluates the Guide Reviewer's findings and applies fixes to `i
 
 ### Step 3: Parallel Review (Up to 2 Rounds)
 
-Three reviewers run in parallel, each focusing on a different aspect. A shared Fixer agent addresses their combined findings. This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`.
+Two reviewers run in parallel, each focusing on a different aspect. A shared Fixer agent addresses their combined findings. This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`.
 
 #### Round 1
 
@@ -81,8 +81,7 @@ Three reviewers run in parallel, each focusing on a different aspect. A shared F
 
 | Reviewer | Focus |
 |----------|-------|
-| **Correctness Reviewer** | Correctness of the implementation relative to goals |
-| **Simplification Reviewer** | Opportunities to simplify the changes or the broader codebase |
+| **Technical Reviewer** | Correctness of the implementation and simplification opportunities |
 | **Security Reviewer** | Security impacts of the changes on the overall system |
 
 Each reviewer produces a concise findings report with issues prioritized by impact.
@@ -91,7 +90,7 @@ Each reviewer produces a concise findings report with issues prioritized by impa
 
 **Agent:** Fixer
 
-The Fixer receives all findings from the three reviewers. It reads `implementation_guide.md` for implementation context and `context_detail.md` for goals/scope, plus diffs and code as needed.
+The Fixer receives all findings from both reviewers. It reads `implementation_guide.md` for implementation context and `context_detail.md` for goals/scope, plus diffs and code as needed.
 
 **Conflict resolution priority:** Security > Correctness > Simplification. When findings conflict, the higher-priority concern wins. The Fixer documents the trade-off in `implementation_guide.md`.
 
@@ -103,7 +102,7 @@ The Fixer runs relevant pre-commit checks as part of its work.
 
 #### Round 2 (If Needed)
 
-If any reviewer in round 1 reported issues, the three reviewers run again in parallel, resumed with their round 1 context preserved. They focus on the Fixer's new changes rather than re-reviewing the full diff.
+If either reviewer in round 1 reported issues, both reviewers run again in parallel, resumed with their round 1 context preserved. They focus on the Fixer's new changes rather than re-reviewing the full diff.
 
 Each reviewer either approves or reports remaining issues. If issues remain, the Fixer runs one more time. If issues persist after round 2, the orchestrator reports them to the user rather than continuing to loop.
 
@@ -115,42 +114,46 @@ Distills `implementation_guide.md` into a reviewer-friendly PR description and c
 
 ## Skills and Agent Specs
 
-The workflow is implemented as **skills** (user-invocable via slash commands) and **agent specs** (prompt files that define named sub-agents). Skills reference agents by name; Claude matches agents to tasks based on their `name` and `description` frontmatter. Each phase can be invoked independently or run as part of the full orchestrated workflow.
+The workflow is implemented as **skills** (user-invocable via slash commands) and **agent specs** (role definitions that describe sub-agents). Agents define philosophy and outputs, not rigid procedures - this makes them flexible enough to recover from partial failures or be reinvoked for missing artifacts.
 
-| Skill | Step | Agent Specs |
-|-------|------|-------------|
-| `cw-workflow` | Full pipeline | (orchestrates the skills below; uses `pr-author` directly) |
-| `cw-planner` | Step 1 | `planner` |
-| `cw-implement-plan` | Step 2 | `implementer`, `guide-reviewer` |
-| `cw-review` | Step 3 | `reviewer-correctness`, `reviewer-simplification`, `reviewer-security`, `fixer` |
+Skills reference agents by name; Claude matches agents to tasks based on their `name` and `description` frontmatter.
 
-### Skill ↔ Agent Relationships
+| Skill | Purpose | Agents Used |
+|-------|---------|-------------|
+| `workflow-resume` | Resume/re-enter in-progress workflow - assesses state, prompts user, loops `workflow-start` | (delegates to `workflow-start`) |
+| `workflow-start` | Full pipeline orchestrator | `planner`, `implementer`, `guide-reviewer`, `pr-author` (+ calls `team-review`) |
+| `team-review` | Step 3 only | `reviewer-technical`, `reviewer-security`, `fixer` |
+
+### Skill and Agent Relationships
 
 ```
-cw-workflow (orchestrator)
-├── calls skill: cw-planner
-│   └── uses agent: planner (includes user approval gate)
-├── calls skill: cw-implement-plan
-│   ├── uses agent: implementer
-│   └── uses agent: guide-reviewer
-├── calls skill: cw-review
-│   ├── uses agents (parallel): reviewer-correctness
-│   │                            reviewer-simplification
-│   │                            reviewer-security
-│   ├── uses agent: fixer
-│   ├── (round 2 if needed)
-│   ├── resumes agents (parallel): reviewer-correctness
-│   │                               reviewer-simplification
-│   │                               reviewer-security
-│   └── uses agent: fixer (if needed)
-└── uses agent: pr-author
+workflow-resume (resume/re-enter)
+└── loops:
+    ├── assesses artifact state, gathers user intent
+    └── calls skill: workflow-start
+        ├── uses agent: planner (includes user approval gate)
+        ├── uses agent: implementer
+        ├── uses agent: guide-reviewer
+        ├── calls skill: team-review
+        │   ├── uses agents (parallel): reviewer-technical
+        │   │                            reviewer-security
+        │   ├── uses agent: fixer
+        │   ├── (round 2 if needed)
+        │   ├── resumes agents (parallel): reviewer-technical
+        │   │                               reviewer-security
+        │   └── uses agent: fixer (if needed)
+        └── uses agent: pr-author
 ```
+
+### Prerequisite Validation
+
+All agent prerequisites are validated via SubagentStart hooks (defined in `hooks/hooks.json`). The hooks call `scripts/validate-prerequisites.sh` to check that required files and commits exist before the agent starts. The `team-review` skill additionally validates its own prerequisites before launching reviewers.
 
 ## Orchestrator Responsibilities
 
-The `cw-workflow` skill manages the full pipeline:
+The `workflow-start` skill manages the full pipeline:
 
 1. **Status updates:** Provides brief updates to the user between major steps
 2. **Escalation:** Surfaces unresolved issues to the user (plan deviation from implementer, persistent review findings after 2 rounds)
 
-Review-specific orchestration (parallel launch, round management) is owned by `cw-review`, not the top-level orchestrator. This keeps `cw-review` self-contained for standalone use.
+Review-specific orchestration (parallel launch, round management) is owned by `team-review`, not the top-level orchestrator. This keeps `team-review` self-contained for standalone use.

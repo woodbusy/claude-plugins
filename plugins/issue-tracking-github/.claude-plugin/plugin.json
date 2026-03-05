@@ -1,0 +1,9 @@
+{
+  "name": "issue-tracking-github",
+  "description": "Issue tracking with GitHub issues",
+  "version": "1.0.0",
+  "author": {
+    "name": "woodbusy",
+    "email": "woodbusy@gmail.com"
+  }
+}

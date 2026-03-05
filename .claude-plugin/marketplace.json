@@ -1,0 +1,19 @@
+{
+  "name": "woodbusy-plugins",
+  "owner": {
+    "name": "woodbusy",
+    "email": "woodbusy@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "agent-workflow",
+      "source": "./plugins/agent-workflow",
+      "description": "Agentic workflow"
+    },
+    {
+      "name": "issue-tracking-github",
+      "source": "./plugins/issue-tracking-github",
+      "description": "Issue tracking with GitHub issues"
+    }
+  ]
+}
