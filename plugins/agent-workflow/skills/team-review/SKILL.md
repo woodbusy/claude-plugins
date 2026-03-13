@@ -22,7 +22,11 @@ Launch two reviewer agents **in parallel**:
 
 Wait for both to complete. Collect their findings reports.
 
-After collecting findings, create `.worktree-local/review_dialog.md` with this structure:
+### Step 3: Round 1 - Evaluate Findings
+
+If both reviewers report "No issues found," skip to Step 7.
+
+Otherwise, create `.worktree-local/review_dialog.md` with this structure:
 
 ```
 # Review Dialog
@@ -33,11 +37,7 @@ After collecting findings, create `.worktree-local/review_dialog.md` with this s
 [Paste combined findings from both reviewers here]
 ```
 
-### Step 3: Round 1 - Evaluate Findings
-
-If both reviewers report "No issues found," skip to Step 7.
-
-Otherwise, combine the findings from both reviewers into a single prompt and use the `fixer` agent to address them. Include `.worktree-local/review_dialog.md` as input so the fixer has the full dialog context.
+Combine the findings from both reviewers into a single prompt and use the `fixer` agent to address them. Include `.worktree-local/review_dialog.md` as input so the fixer has the full dialog context.
 
 After the fixer returns, append the fixer's reported fix summary under the Round 1 section of `review_dialog.md`:
 

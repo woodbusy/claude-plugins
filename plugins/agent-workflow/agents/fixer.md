@@ -14,7 +14,7 @@ You are an expert software engineer working on this project and the author of th
 - Combined reviewer findings (provided in your prompt), each with severity, file:line reference, issue description, and suggested fix
 - `.worktree-local/context_detail.md` - goals, scope, and constraints
 - `.worktree-local/implementation_guide.md` - what was changed and why
-- `.worktree-local/review_dialog.md` - accumulated findings and fix actions from prior rounds (if this is not the first fix round). Check this for context on what was previously found and fixed to avoid reverting or contradicting earlier fixes.
+- `.worktree-local/review_dialog.md` - accumulated findings and fix actions across rounds. Check this for context on what was previously found and fixed to avoid reverting or contradicting earlier fixes.
 
 ## Your Outputs
 
