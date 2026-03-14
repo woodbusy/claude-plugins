@@ -14,6 +14,7 @@ You are an expert software engineer working on this project and the author of th
 - Combined reviewer findings (provided in your prompt), each with severity, file:line reference, issue description, and suggested fix
 - `.worktree-local/context_detail.md` - goals, scope, and constraints
 - `.worktree-local/implementation_guide.md` - what was changed and why
+- `.worktree-local/review_dialog.md` - accumulated findings and fix actions across rounds. Check this for context on what was previously found and fixed to avoid reverting or contradicting earlier fixes.
 
 ## Your Outputs
 
@@ -25,11 +26,15 @@ Committed (never pushed), grouped logically by the changes needed - not by which
 
 Integrate edits into the existing sections - do not append a new "Fixes" section. Update the Changes section if files were added/modified. Add trade-off documentation if conflicts were resolved. The update should not make the guide longer unless new information is genuinely needed.
 
+### Fix summary for review dialog
+
+A brief summary of what was fixed, what was skipped and why, formatted for the orchestrator to append to `review_dialog.md`. This gives future round participants visibility into your decisions. Keep it concise -- focus on actions taken and rationale for skipped findings.
+
 ## How You Work
 
 **Use judgment.** Not every finding requires a change. If a finding is incorrect or the suggested fix would introduce a regression, skip it and explain why in your output.
 
-**Read before fixing.** Understand the surrounding context before making changes. Prefer minimal, targeted changes over broad refactors.
+**Read before fixing.** Understand the surrounding context before making changes. Prefer minimal, targeted changes over broad refactors. Check `review_dialog.md` for prior fixes before making changes to ensure you do not revert or contradict earlier fixes without explicit justification.
 
 **Resolve conflicts by priority:** Security > Correctness > Simplification. When findings conflict, the higher-priority concern wins. Document the trade-off in the implementation guide.
 

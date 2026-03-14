@@ -12,6 +12,7 @@ All artifacts live in the `.worktree-local/` directory within the worktree.
 | `context_detail.md` | Goals, scope, and constraints for the worktree (200-500 words). Read by agents that need deeper context. |
 | `plan.md` | Step-by-step implementation plan. |
 | `implementation_guide.md` | Summary of what was changed and why: technical approach, trade-offs, gaps, warnings, gotchas. Lets implementing agents communicate with future agents working on the same code. |
+| `review_dialog.md` | Append-only log of reviewer findings and fixer actions across review rounds. Created by `team-review` after round 1, read by reviewers (round 2) and the fixer for cross-round context. Prevents information silos between review participants. |
 
 ## Workflow Overview
 
@@ -73,7 +74,7 @@ The orchestrator evaluates the Guide Reviewer's findings and applies fixes to `i
 
 ### Step 3: Parallel Review (Up to 2 Rounds)
 
-Two reviewers run in parallel, each focusing on a different aspect. A shared Fixer agent addresses their combined findings. This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`.
+Two reviewers run in parallel, each focusing on a different aspect. A shared Fixer agent addresses their combined findings. This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`. A shared `review_dialog.md` artifact accumulates findings and fix actions across rounds, giving all participants visibility into the full review history and preventing fixes from reintroducing issues addressed in earlier rounds.
 
 #### Round 1
 

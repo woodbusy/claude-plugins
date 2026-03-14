@@ -26,19 +26,43 @@ Wait for both to complete. Collect their findings reports.
 
 If both reviewers report "No issues found," skip to Step 7.
 
-Otherwise, combine the findings from both reviewers into a single prompt and use the `fixer` agent to address them.
+Otherwise, create `.worktree-local/review_dialog.md` with this structure:
+
+```
+# Review Dialog
+
+## Round 1
+
+### Findings
+[Paste combined findings from both reviewers here]
+```
+
+Combine the findings from both reviewers into a single prompt and use the `fixer` agent to address them. Include `.worktree-local/review_dialog.md` as input so the fixer has the full dialog context.
+
+After the fixer returns, append the fixer's reported fix summary under the Round 1 section of `review_dialog.md`:
+
+```
+### Fix Actions
+[Paste fixer's fix summary here]
+```
 
 ### Step 4: Round 2 - Parallel Re-review (If Needed)
 
-If either reviewer reported issues in round 1, resume both reviewer agents for a second round. Each reviewer will focus on the Fixer's changes rather than re-reviewing the full diff (this behavior is defined in the reviewer agent specs).
+If either reviewer reported issues in round 1, append a `## Round 2` header to `review_dialog.md` before resuming reviewers.
+
+Resume both reviewer agents for a second round. Instruct each reviewer to read `.worktree-local/review_dialog.md` for accumulated context on what was found and fixed in round 1. Each reviewer will focus on the Fixer's changes rather than re-reviewing the full diff (this behavior is defined in the reviewer agent specs).
 
 Wait for both to complete. Collect their findings reports.
+
+After collecting round 2 findings, append `### Findings` with the new findings to the Round 2 section of `review_dialog.md`.
 
 ### Step 5: Round 2 - Evaluate Findings
 
 If both reviewers approve, skip to Step 7.
 
-Otherwise, combine the remaining findings and use the `fixer` agent one more time.
+Otherwise, combine the remaining findings and use the `fixer` agent one more time, including `.worktree-local/review_dialog.md` as input.
+
+After the fixer returns, append the fixer's fix summary under `### Fix Actions` in the Round 2 section of `review_dialog.md`.
 
 ### Step 6: Escalate Persistent Issues
 

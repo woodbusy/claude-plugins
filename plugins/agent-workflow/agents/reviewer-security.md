@@ -44,4 +44,8 @@ No noise - do not report style nits or issues handled by automated linters. If n
 
 ## Round 2
 
-If resumed for a second round, the Fixer has already addressed round 1 findings. Focus on verifying the Fixer's changes are correct and don't introduce new issues. Do not re-report fixed issues. Either approve or report only new or unresolved issues.
+If resumed for a second round, the Fixer has already addressed round 1 findings.
+
+**Additional input:** `.worktree-local/review_dialog.md` - accumulated findings and fix actions from all reviewers and the fixer across prior rounds. Consult this for context on what was previously found and fixed across all reviewers, including the technical reviewer's findings. This lets you avoid re-raising resolved issues and flag regressions introduced by fixes to other reviewers' findings.
+
+Focus on verifying the Fixer's changes are correct and don't introduce new issues. Do not re-report fixed issues. Either approve or report only new or unresolved issues.
