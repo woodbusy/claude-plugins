@@ -12,7 +12,7 @@ All artifacts live in the `.worktree-local/` directory within the worktree.
 | `context_detail.md` | Goals, scope, and constraints for the worktree (200-500 words). Read by agents that need deeper context. |
 | `plan.md` | Step-by-step implementation plan. |
 | `implementation_guide.md` | Summary of what was changed and why: technical approach, trade-offs, gaps, warnings, gotchas. Lets implementing agents communicate with future agents working on the same code. |
-| `review_dialog.md` | Append-only log of reviewer findings and fixer actions across review rounds. Created by `team-review` after round 1, read by reviewers (round 2) and the fixer for cross-round context. Prevents information silos between review participants. |
+| `review_dialog.md` | Append-only log of reviewer findings, arbitration outcomes, conflict responses, human decisions on escalated conflicts, and fixer actions across review rounds. Created by `team-review` after round 1, read by reviewers (round 2) and the fixer for cross-round context. Prevents information silos between review participants. |
 
 ## Workflow Overview
 
@@ -74,7 +74,7 @@ The orchestrator evaluates the Guide Reviewer's findings and applies fixes to `i
 
 ### Step 3: Parallel Review (Up to 2 Rounds)
 
-A reviewer team runs in parallel, each member focusing on a different aspect. A shared Fixer agent addresses their combined findings. This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`. A shared `review_dialog.md` artifact accumulates findings and fix actions across rounds, giving all participants visibility into the full review history and preventing fixes from reintroducing issues addressed in earlier rounds.
+A reviewer team runs in parallel, each member focusing on a different aspect. After the team finishes a round, an **arbiter** (a fresh `reviewer-tech-lead` invocation in Arbiter Mode) inspects the findings for conflicts; conflicts are driven to convergence via a targeted re-prompt to the conflicting reviewers, and any conflicts the arbiter still cannot resolve are escalated to the user via `AskUserQuestion`. Once arbitration is complete, a shared Fixer agent addresses the combined findings (using arbitration outcomes and human decisions where they apply). This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`. A shared `review_dialog.md` artifact accumulates findings, arbitration, conflict responses, human decisions, and fix actions across rounds, giving all participants visibility into the full review history and preventing fixes from reintroducing issues addressed in earlier rounds.
 
 The team is chosen per change-set. The `team-review` skill inspects `git diff --name-only origin/main...HEAD` and selects reviewers based on which categories of files are touched.
 
@@ -96,13 +96,25 @@ The full path classification rules and edge cases (docs-only, security-relevant 
 
 The selected reviewers run in parallel and each produce a concise findings report with issues prioritized by impact.
 
-##### Step 3b: Fix
+##### Step 3b: Arbitrate Conflicts
+
+**Agent:** `reviewer-tech-lead` (fresh invocation, distinct from the reviewer-tech-lead that participated in 3a). The arbiter task is supplied by `team-review`'s prompt templates, not baked into the agent spec.
+
+The arbiter inspects the round's findings for **conflicts**: direct contradictions on the same code, incompatible recommended approaches to the same finding, and cross-finding tensions where one fix would step on another. It does not re-review the diff.
+
+If the arbiter detects conflicts, the orchestrator targets a **single** re-prompt at only the conflicting reviewers with only the conflicting findings, asking each to defend, revise, or concede. The arbiter is then re-invoked to evaluate the responses and declare each conflict resolved or unresolved.
+
+Any conflict the arbiter declares **unresolved** is escalated to the user via `AskUserQuestion`, with the conflicting positions as options plus the standard free-form "Other" override. The user's decision is authoritative for the fixer.
+
+##### Step 3c: Fix
 
 **Agent:** Fixer
 
-The Fixer receives all findings from every selected reviewer. It reads `implementation_guide.md` for implementation context and `context_detail.md` for goals/scope, plus diffs and code as needed.
+The Fixer receives all findings from every selected reviewer, plus any **resolution directives** (from the arbiter) and **human decisions** (from escalated conflicts) recorded in `review_dialog.md`. Where a directive or decision applies to a finding, the Fixer follows that guidance over the raw finding.
 
-**Conflict resolution priority:** Security > Correctness (any reviewer) > Domain-consistency (specialist concerns within their territory) > Simplification. Within the same tier, the specialist's view wins on their own turf. The Fixer documents trade-offs in `implementation_guide.md`.
+It reads `implementation_guide.md` for implementation context and `context_detail.md` for goals/scope, plus diffs and code as needed.
+
+**Default conflict-resolution priority** (when no arbitration directive applies, e.g. for tensions that didn't rise to a flagged conflict): Security > Correctness (any reviewer) > Domain-consistency (specialist concerns within their territory) > Simplification. Within the same tier, the specialist's view wins on their own turf. The Fixer documents trade-offs in `implementation_guide.md`.
 
 **Outputs:**
 - Code fixes (logically grouped commits)
@@ -118,7 +130,7 @@ If any reviewer in round 1 reported issues, a subset re-runs in parallel:
 - Security re-runs if it ran in round 1.
 - Each specialist re-runs only if it had findings in round 1.
 
-Resumed reviewers focus on the Fixer's new changes rather than re-reviewing the full diff. Each either approves or reports remaining issues. If issues remain, the Fixer runs one more time. If issues persist after round 2, the orchestrator reports them to the user rather than continuing to loop.
+Resumed reviewers focus on the Fixer's new changes rather than re-reviewing the full diff. Each either approves or reports remaining issues. The same arbitration sub-flow then runs against the round 2 findings before the Fixer is invoked one more time. If issues persist after round 2, the orchestrator reports them to the user rather than continuing to loop.
 
 ### Step 4: PR Creation
 
@@ -155,11 +167,18 @@ workflow-resume (resume/re-enter)
         │   │                            reviewer-application     (if applicable)
         │   │                            reviewer-infra-platform  (if applicable)
         │   │                            reviewer-dev-platform    (if applicable)
+        │   ├── uses agent: reviewer-tech-lead (fresh, with arbiter-detect prompt)
+        │   ├── (if conflicts) re-prompts conflicting reviewers in parallel
+        │   │                  with conflict-response prompt
+        │   ├── uses agent: reviewer-tech-lead (fresh, with arbiter-resolve prompt)
+        │   ├── (if unresolved) escalates via AskUserQuestion
         │   ├── uses agent: fixer
         │   ├── (round 2 if needed)
         │   ├── resumes agents (parallel): reviewer-tech-lead
         │   │                               reviewer-security      (if it ran in round 1)
         │   │                               specialists with prior findings
+        │   │                               (review-followup prompt)
+        │   ├── uses agent: reviewer-tech-lead (fresh; round 2 arbitration sub-flow)
         │   └── uses agent: fixer (if needed)
         └── uses agent: pr-author
 ```
