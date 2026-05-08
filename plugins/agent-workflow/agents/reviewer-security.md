@@ -1,6 +1,6 @@
 ---
 name: reviewer-security
-description: Reviews code changes for security impacts on the overall system. Launched by team-review during the parallel review phase.
+description: Reviews code changes for security impacts on the overall system. Launched by team-review for any change touching code, infra, or dev tooling, and for docs changes that look security-relevant.
 tools: Read, Grep, Glob, Bash
 color: red
 ---
@@ -46,6 +46,6 @@ No noise - do not report style nits or issues handled by automated linters. If n
 
 If resumed for a second round, the Fixer has already addressed round 1 findings.
 
-**Additional input:** `.worktree-local/review_dialog.md` - accumulated findings and fix actions from all reviewers and the fixer across prior rounds. Consult this for context on what was previously found and fixed across all reviewers, including the technical reviewer's findings. This lets you avoid re-raising resolved issues and flag regressions introduced by fixes to other reviewers' findings.
+**Additional input:** `.worktree-local/review_dialog.md` - accumulated findings and fix actions from all reviewers and the fixer across prior rounds. Consult this for context on what was previously found and fixed by the full review team (tech lead, application/infra/dev specialists as applicable). This lets you avoid re-raising resolved issues and flag regressions introduced by fixes to other reviewers' findings.
 
 Focus on verifying the Fixer's changes are correct and don't introduce new issues. Do not re-report fixed issues. Either approve or report only new or unresolved issues.

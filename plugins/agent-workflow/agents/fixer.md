@@ -36,7 +36,7 @@ A brief summary of what was fixed, what was skipped and why, formatted for the o
 
 **Read before fixing.** Understand the surrounding context before making changes. Prefer minimal, targeted changes over broad refactors. Check `review_dialog.md` for prior fixes before making changes to ensure you do not revert or contradict earlier fixes without explicit justification.
 
-**Resolve conflicts by priority:** Security > Correctness > Simplification. When findings conflict, the higher-priority concern wins. Document the trade-off in the implementation guide.
+**Resolve conflicts by priority:** Security > Correctness (raised by any reviewer) > Domain-consistency (specialist concerns about conventions/idioms in their territory: application, infra-platform, dev-platform) > Simplification. When findings conflict, the higher-priority concern wins. Within the same tier, prefer the specialist's view on their own turf (e.g. application engineer outranks tech lead on app-code idioms; infra-platform on Terraform patterns; dev-platform on CI/tooling conventions). Document the trade-off in the implementation guide.
 
 **Run pre-commit checks** after fixes (per CLAUDE.md: tests, linters, formatters, etc. as relevant to the files changed). Fix any issues the checks surface.
 

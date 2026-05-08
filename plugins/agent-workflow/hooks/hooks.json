@@ -29,11 +29,11 @@
         ]
       },
       {
-        "matcher": "reviewer-technical",
+        "matcher": "reviewer-tech-lead",
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-technical"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-tech-lead"
           }
         ]
       },
@@ -43,6 +43,33 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-security"
+          }
+        ]
+      },
+      {
+        "matcher": "reviewer-application",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-application"
+          }
+        ]
+      },
+      {
+        "matcher": "reviewer-infra-platform",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-infra-platform"
+          }
+        ]
+      },
+      {
+        "matcher": "reviewer-dev-platform",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-dev-platform"
           }
         ]
       },

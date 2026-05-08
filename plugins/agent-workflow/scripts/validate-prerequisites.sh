@@ -47,14 +47,7 @@ case "$NAME" in
     check_file ".worktree-local/implementation_guide.md" \
       "Run the implementer first."
     ;;
-  reviewer-technical)
-    check_commits_ahead "Run the implementer first."
-    check_file ".worktree-local/context_detail.md" \
-      "Run the implementer first."
-    check_file ".worktree-local/implementation_guide.md" \
-      "Run the implementer first."
-    ;;
-  reviewer-security)
+  reviewer-tech-lead | reviewer-security | reviewer-application | reviewer-infra-platform | reviewer-dev-platform)
     check_commits_ahead "Run the implementer first."
     check_file ".worktree-local/context_detail.md" \
       "Run the implementer first."

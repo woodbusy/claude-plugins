@@ -74,26 +74,35 @@ The orchestrator evaluates the Guide Reviewer's findings and applies fixes to `i
 
 ### Step 3: Parallel Review (Up to 2 Rounds)
 
-Two reviewers run in parallel, each focusing on a different aspect. A shared Fixer agent addresses their combined findings. This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`. A shared `review_dialog.md` artifact accumulates findings and fix actions across rounds, giving all participants visibility into the full review history and preventing fixes from reintroducing issues addressed in earlier rounds.
+A reviewer team runs in parallel, each member focusing on a different aspect. A shared Fixer agent addresses their combined findings. This cycle runs up to 2 rounds. All reviews operate on the cumulative diff from `origin/main`. A shared `review_dialog.md` artifact accumulates findings and fix actions across rounds, giving all participants visibility into the full review history and preventing fixes from reintroducing issues addressed in earlier rounds.
+
+The team is chosen per change-set. The `team-review` skill inspects `git diff --name-only origin/main...HEAD` and selects reviewers based on which categories of files are touched.
+
+| Reviewer | When it runs | Focus |
+|----------|--------------|-------|
+| **Tech Lead** (`reviewer-tech-lead`) | Always | Intent, correctness, simplification, documentation across the whole diff |
+| **Security** (`reviewer-security`) | Any change to code, infra, or dev tooling; or security-relevant docs | Security impacts on the overall system |
+| **Application** (`reviewer-application`) | App source/tests/dependency manifests changed; also runs for docs-only changes | App-code correctness, conventions, idioms, refactoring opportunities |
+| **Infra Platform** (`reviewer-infra-platform`) | Production IaC changed (Terraform/Pulumi/CloudFormation, Helm, k8s, prod Dockerfiles, cloud platform config) | Resource correctness, blast radius, platform consistency, operational impact |
+| **Dev Platform** (`reviewer-dev-platform`) | Local dev tooling, devcontainer, dev Dockerfiles/compose, tool-version files, dev scripts, CI/CD workflows, lint/format/hook configs | Pipeline reliability, contributor ergonomics, dev/CI parity |
+
+Tech-lead always runs as a generalist pass; specialists provide deeper coverage where their domain is touched. Some overlap on technical correctness is intentional - it reduces the risk of any single reviewer being the sole gate.
+
+The full path classification rules and edge cases (docs-only, security-relevant docs, prod vs. dev Dockerfiles) live in `skills/team-review/SKILL.md`.
 
 #### Round 1
 
 ##### Step 3a: Parallel Review
 
-| Reviewer | Focus |
-|----------|-------|
-| **Technical Reviewer** | Correctness of the implementation and simplification opportunities |
-| **Security Reviewer** | Security impacts of the changes on the overall system |
-
-Each reviewer produces a concise findings report with issues prioritized by impact.
+The selected reviewers run in parallel and each produce a concise findings report with issues prioritized by impact.
 
 ##### Step 3b: Fix
 
 **Agent:** Fixer
 
-The Fixer receives all findings from both reviewers. It reads `implementation_guide.md` for implementation context and `context_detail.md` for goals/scope, plus diffs and code as needed.
+The Fixer receives all findings from every selected reviewer. It reads `implementation_guide.md` for implementation context and `context_detail.md` for goals/scope, plus diffs and code as needed.
 
-**Conflict resolution priority:** Security > Correctness > Simplification. When findings conflict, the higher-priority concern wins. The Fixer documents the trade-off in `implementation_guide.md`.
+**Conflict resolution priority:** Security > Correctness (any reviewer) > Domain-consistency (specialist concerns within their territory) > Simplification. Within the same tier, the specialist's view wins on their own turf. The Fixer documents trade-offs in `implementation_guide.md`.
 
 **Outputs:**
 - Code fixes (logically grouped commits)
@@ -103,9 +112,13 @@ The Fixer runs relevant pre-commit checks as part of its work.
 
 #### Round 2 (If Needed)
 
-If either reviewer in round 1 reported issues, both reviewers run again in parallel, resumed with their round 1 context preserved. They focus on the Fixer's new changes rather than re-reviewing the full diff.
+If any reviewer in round 1 reported issues, a subset re-runs in parallel:
 
-Each reviewer either approves or reports remaining issues. If issues remain, the Fixer runs one more time. If issues persist after round 2, the orchestrator reports them to the user rather than continuing to loop.
+- Tech-lead always re-runs.
+- Security re-runs if it ran in round 1.
+- Each specialist re-runs only if it had findings in round 1.
+
+Resumed reviewers focus on the Fixer's new changes rather than re-reviewing the full diff. Each either approves or reports remaining issues. If issues remain, the Fixer runs one more time. If issues persist after round 2, the orchestrator reports them to the user rather than continuing to loop.
 
 ### Step 4: PR Creation
 
@@ -123,7 +136,7 @@ Skills reference agents by name; Claude matches agents to tasks based on their `
 |-------|---------|-------------|
 | `workflow-resume` | Resume/re-enter in-progress workflow - assesses state, prompts user, loops `workflow-start` | (delegates to `workflow-start`) |
 | `workflow-start` | Full pipeline orchestrator | `planner`, `implementer`, `guide-reviewer`, `pr-author` (+ calls `team-review`) |
-| `team-review` | Step 3 only | `reviewer-technical`, `reviewer-security`, `fixer` |
+| `team-review` | Step 3 only | `reviewer-tech-lead`, `reviewer-security`, `reviewer-application`, `reviewer-infra-platform`, `reviewer-dev-platform`, `fixer` (selected per change-set) |
 
 ### Skill and Agent Relationships
 
@@ -136,12 +149,17 @@ workflow-resume (resume/re-enter)
         ├── uses agent: implementer
         ├── uses agent: guide-reviewer
         ├── calls skill: team-review
-        │   ├── uses agents (parallel): reviewer-technical
-        │   │                            reviewer-security
+        │   ├── classifies diff -> selects reviewer team
+        │   ├── uses agents (parallel): reviewer-tech-lead
+        │   │                            reviewer-security        (if applicable)
+        │   │                            reviewer-application     (if applicable)
+        │   │                            reviewer-infra-platform  (if applicable)
+        │   │                            reviewer-dev-platform    (if applicable)
         │   ├── uses agent: fixer
         │   ├── (round 2 if needed)
-        │   ├── resumes agents (parallel): reviewer-technical
-        │   │                               reviewer-security
+        │   ├── resumes agents (parallel): reviewer-tech-lead
+        │   │                               reviewer-security      (if it ran in round 1)
+        │   │                               specialists with prior findings
         │   └── uses agent: fixer (if needed)
         └── uses agent: pr-author
 ```
