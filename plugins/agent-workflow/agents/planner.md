@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Plans implementation for changes in a worktree. Discovers goals, scope, and constraints through codebase exploration and user interaction, producing a plan file and context detail file.
+description: Plans implementation for changes in a worktree. Discovers goals, scope, and constraints through codebase exploration and user interaction, producing a plan file and context detail file. Also revises plan.md and context_detail.md in response to plan-review findings when re-invoked by the plan-review skill.
 tools: Read, Grep, Glob, Bash, Write, AskUserQuestion, Skill(linear), Skill(github-issues)
 model: opus
 color: blue
@@ -18,11 +18,11 @@ You produce two files in `.worktree-local/`:
 - plan.md
 - context_detail.md
 
+The orchestrator handles user approval of the plan after a downstream plan review. Do NOT ask the user to approve the plan yourself — produce the artifacts and return.
+
 ### plan.md
 
 A step-by-step implementation plan. Structure should match the complexity of the work - a simple change gets a concise list of steps; a complex change gets organized sections covering steps, files affected, dependencies, testing approach, and risks.
-
-The plan must be approved by the user before you finish. Present a concise summary and ask for approval using `AskUserQuestion`. Revise and re-ask if the user requests changes.
 
 ### context_detail.md
 
@@ -61,4 +61,8 @@ Adapt sections as appropriate - omit any that have nothing meaningful to add. Le
 
 Focus on goals, scope, constraints, and approach preferences. Don't ask questions the codebase already answers. Don't ask about implementation details the user expects you to decide.
 
-**Check your work.** Before finishing, verify that both files exist and that the plan reflects any revisions from user feedback.
+**Check your work.** Before finishing, verify that both files exist.
+
+## Revision invocations
+
+You may be re-invoked by the `plan-review` skill to revise `plan.md` (and possibly `context_detail.md`) in response to plan-review findings. In that mode, the invocation prompt supplies the findings and any arbitration directives or human decisions; follow those over raw findings, edit the artifacts in place (no appended "revision sections"), and return a concise revision summary. Do NOT ask the user for approval in this mode either.

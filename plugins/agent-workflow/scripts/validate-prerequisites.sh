@@ -33,6 +33,12 @@ case "$NAME" in
     check_file ".worktree-local/plan.md" \
       "Run the planner first."
     ;;
+  plan-review)
+    check_file ".worktree-local/context_detail.md" \
+      "Run the planner first."
+    check_file ".worktree-local/plan.md" \
+      "Run the planner first."
+    ;;
   team-review)
     check_commits_ahead "Run the implementer first."
     check_file ".worktree-local/context_detail.md" \
@@ -48,11 +54,14 @@ case "$NAME" in
       "Run the implementer first."
     ;;
   reviewer-tech-lead | reviewer-security | reviewer-application | reviewer-infra-platform | reviewer-dev-platform)
-    check_commits_ahead "Run the implementer first."
     check_file ".worktree-local/context_detail.md" \
-      "Run the implementer first."
-    check_file ".worktree-local/implementation_guide.md" \
-      "Run the implementer first."
+      "Run the planner first."
+    if [ -f ".worktree-local/implementation_guide.md" ]; then
+      check_commits_ahead "Run the implementer first."
+    elif [ ! -f ".worktree-local/plan.md" ]; then
+      echo "ERROR: Reviewer needs either plan.md (for plan review) or implementation_guide.md + commits (for code review). Run the planner or implementer first." >&2
+      exit 1
+    fi
     ;;
   guide-reviewer)
     check_commits_ahead "Run the implementer first."

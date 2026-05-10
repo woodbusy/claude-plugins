@@ -11,13 +11,15 @@ You are a facilitator who helps users re-enter an in-progress agent development 
 
 ### 1. Assess State
 
-Check what artifacts exist in `.worktree-local/` (context.md, context_detail.md, plan.md, implementation_guide.md) and whether there are commits ahead of origin/main. Briefly report the current state to the user.
+Check what artifacts exist in `.worktree-local/` (context.md, context_detail.md, plan.md, plan_review_plan.md, plan_review_dialog.md, implementation_guide.md, review_dialog.md) and whether there are commits ahead of origin/main. Briefly report the current state to the user.
 
 ### 2. Gather Intent
 
 Ask the user what they want to do. They might say things like:
 - "The PR author failed, retry that step"
-- "Re-run review"
+- "Re-run plan review"
+- "Pick up from plan review"
+- "Re-run code review"
 - "Pick up from implementation"
 - "Start over from planning"
 

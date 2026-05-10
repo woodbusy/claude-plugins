@@ -20,14 +20,15 @@ This is a Claude Code plugin marketplace repository containing reusable plugins 
 
 ### agent-workflow
 
-Multi-agent workflow for implementing changes via git worktrees. The pipeline: **Plan → Implement → Review → PR**.
+Multi-agent workflow for implementing changes via git worktrees. The pipeline: **Plan → Plan Review → Implement → Code Review → PR**.
 
 Skills:
 - `workflow-resume` — Resume/re-enter an in-progress workflow; prompts user for what to do, delegates to `workflow-start`, re-prompts until done
-- `workflow-start` — Full pipeline orchestrator; directly uses planner, implementer, guide-reviewer, and pr-author agents, delegates review to `team-review`
-- `team-review` — Parallel review (correctness, simplification, security) with up to 2 fix rounds
+- `workflow-start` — Full pipeline orchestrator; directly uses planner, implementer, guide-reviewer, and pr-author agents, delegates plan review to `plan-review` and code review to `team-review`, owns the user-approval gate after plan review
+- `plan-review` — Triage Tech Lead classifies plan complexity (Low/Moderate/High) and selects reviewer team; team reviews plan.md and context_detail.md in parallel; conflicts arbitrated; planner re-invoked to revise (1 round at Low/Moderate, up to 2 at High)
+- `team-review` — Parallel code review (correctness, simplification, security) with up to 2 fix rounds
 
-Agent prerequisites are validated via SubagentStart hooks. Workflow artifacts live in `.worktree-local/` within the target worktree.
+Reviewer agents are dual-mode (plan vs code), driven by per-invocation prompts. Agent prerequisites are validated via SubagentStart hooks. Workflow artifacts live in `.worktree-local/` within the target worktree.
 
 ### issue-tracking-github
 
