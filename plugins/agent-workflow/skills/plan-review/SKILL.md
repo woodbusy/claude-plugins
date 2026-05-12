@@ -103,11 +103,7 @@ Skip this step if the tier is **Low** or **Moderate**. For **High**, only procee
 
 Append a `## Round 2` header to `plan_review_dialog.md`.
 
-Choose the round 2 reviewer set:
-
-- Always re-run `reviewer-tech-lead`.
-- Re-run `reviewer-security` if it ran in round 1.
-- Re-run any specialist (`reviewer-application`, `reviewer-infra-platform`, `reviewer-dev-platform`) that **reported findings in round 1**. Specialists that approved in round 1 do not re-run.
+Re-run **every reviewer that participated in round 1**, regardless of whether they reported findings. A reviewer whose domain was in scope for round 1 stays in scope for round 2: the planner's revisions could affect their domain even if they had no issues with the original plan.
 
 Send the **`review-followup.md`** prompt to those reviewers **in parallel**.
 

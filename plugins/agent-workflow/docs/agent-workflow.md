@@ -143,11 +143,7 @@ The Fixer runs relevant pre-commit checks as part of its work.
 
 #### Round 2 (If Needed)
 
-If any reviewer in round 1 reported issues, a subset re-runs in parallel:
-
-- Tech-lead always re-runs.
-- Security re-runs if it ran in round 1.
-- Each specialist re-runs only if it had findings in round 1.
+If any reviewer in round 1 reported issues, **every reviewer that participated in round 1 re-runs in parallel** — including reviewers that approved without findings. A reviewer's domain stays in scope across rounds: the Fixer's changes can impact a domain even when the original diff didn't draw any findings from that domain's specialist.
 
 Resumed reviewers focus on the Fixer's new changes rather than re-reviewing the full diff. Each either approves or reports remaining issues. The same arbitration sub-flow then runs against the round 2 findings before the Fixer is invoked one more time. If issues persist after round 2, the orchestrator reports them to the user rather than continuing to loop.
 
