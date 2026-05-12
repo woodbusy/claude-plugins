@@ -37,12 +37,12 @@ Multi-agent workflow for authoring technical standards. The pipeline: **Discover
 Skills:
 - `workflow-resume` — Resume/re-enter an in-progress workflow; prompts user for what to do, delegates to `workflow-start`, re-prompts until done
 - `workflow-start` — Full pipeline orchestrator; detects existing artifacts at entry and resumes from the first incomplete stage, calls the four stage skills in sequence, and owns the user-approval gate after discovery (the outlining gate lives inside `/outline-standard` — variant comparison is the gate)
-- `discover-standard` — Interview via `goals-author`, write `GOALS.md`, three-lens parallel critique (substance, form-fit, implementer), arbitrate conflicts, revise
+- `discover-standard` — Invokes the `goals-author` sub-skill (interview + write `GOALS.md`), three-lens parallel critique (substance, form-fit, implementer), arbitrate conflicts, revise
 - `outline-standard` — Three parallel outline variants (principle, pragmatic, prescriptive) on a flexibility axis, user picks/blends → `OUTLINE.md`
 - `draft-standard` — Single `writer` agent expands `GOALS.md` + `OUTLINE.md` into the final standard
 - `review-standard` — Three-role parallel critique (substance/implementer cold, tech-writer with context), arbitrate conflicts, orchestrator-driven goals-coverage pass
 
-Reviewer agents that participate in both critiques (`reviewer-substance`, `reviewer-implementer`) are dual-mode, driven by per-invocation prompts. `reviewer-tech-writer` is also mode-driven: draft reviewer with full context, plus a fresh-invocation arbiter for the conflict sub-flow inside both critiques. Workflow artifacts live in `.drafts/<topic>/` (branch-ephemeral) in the consumer repo, with the final standard at `standards/<topic>-standard.md`.
+Reviewer agents that participate in both critiques (`reviewer-substance`, `reviewer-implementer`) are dual-mode, driven by per-invocation prompts. `reviewer-tech-writer` is also mode-driven: draft reviewer with full context, plus a fresh-invocation arbiter for the conflict sub-flow inside both critiques. The `goals-author` sub-skill is mode-driven the same way (initial / refinement / revision); it is a skill rather than an agent because the discovery interview needs `AskUserQuestion`, which is unavailable to subagents. Workflow artifacts live in `.drafts/<topic>/` (branch-ephemeral) in the consumer repo, with the final standard at `standards/<topic>-standard.md`.
 
 ### issue-tracking-github
 

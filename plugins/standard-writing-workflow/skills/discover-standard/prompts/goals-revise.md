@@ -1,10 +1,10 @@
 # Goals-revise prompt template
 
-Sent to `goals-author` to revise `GOALS.md` in response to a round of discovery-critique findings + arbitration directives. The orchestrator substitutes `{{ROUND_FINDINGS}}` and `{{ARBITRATION_DIRECTIVES}}` before sending.
+Sent to the goals-author skill (as `args` via the `Skill` tool) to revise `GOALS.md` in response to a round of discovery-critique findings + arbitration directives. The orchestrator substitutes `{{ROUND_FINDINGS}}` and `{{ARBITRATION_DIRECTIVES}}` before sending.
 
 ---
 
-`GOALS.md` has been reviewed by the discovery-critique team. Revise it to address the findings below. This is NOT a fresh write — preserve the parts that weren't called out.
+Run in **revision mode**. `GOALS.md` has been reviewed by the discovery-critique team. Revise it to address the findings below. This is NOT a fresh write — preserve the parts that weren't called out.
 
 ## Inputs to read
 

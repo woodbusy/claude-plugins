@@ -36,7 +36,7 @@ Record the user's choice. From here on, "skip stage X" means the stage's complet
 
 **Skip if:** `.drafts/<topic>/GOALS.md` exists and the user opted to resume past discovery. Print `"Discovery already complete (GOALS.md present), skipping."` and proceed to Step 2 — *do not run the post-discovery user-approval gate, since it was passed in a prior run.*
 
-**Otherwise:** Use the `/discover-standard` skill to interview the user (via the `goals-author` agent), write `GOALS.md`, run the three-lens parallel critique, arbitrate any conflicts, and revise.
+**Otherwise:** Use the `/discover-standard` skill to interview the user (via the `goals-author` sub-skill), write `GOALS.md`, run the three-lens parallel critique, arbitrate any conflicts, and revise.
 
 When `/discover-standard` returns, summarize the resulting `GOALS.md` for the user at a high level (post-revision) and ask for approval via `AskUserQuestion`. If the user requests changes, re-invoke `/discover-standard` with their direction and ask again. Only proceed once the user approves.
 

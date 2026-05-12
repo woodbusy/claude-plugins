@@ -31,15 +31,18 @@ Discover       Outline         Draft          Review
 ### Step 1: Discovery
 
 **Skill:** `discover-standard`
-**Agents:** `goals-author`, `reviewer-substance`, `reviewer-form-fit`, `reviewer-implementer`, `reviewer-tech-writer` (arbiter)
+**Sub-skill:** `goals-author` (interviewer + writer; runs in the main loop so it can use `AskUserQuestion`)
+**Agents:** `reviewer-substance`, `reviewer-form-fit`, `reviewer-implementer`, `reviewer-tech-writer` (arbiter)
 
-`goals-author` interviews the user (via `AskUserQuestion`) and writes `GOALS.md` capturing purpose, scope, threats, requirement areas, prohibitions, stakeholders, open questions, and inferences. Three reviewers then critique `GOALS.md` in parallel along orthogonal lenses:
+The `goals-author` skill interviews the user (via `AskUserQuestion`) and writes `GOALS.md` capturing purpose, scope, threats, requirement areas, prohibitions, stakeholders, open questions, and inferences. Three reviewers then critique `GOALS.md` in parallel along orthogonal lenses:
 
 - **Substance** — coverage, threats, scope, internal contradictions, definitions.
 - **Form-fit** — where the eventual standard will want a device (prescriptive or risk-tiered) rather than principle prose; where the user's signal is weak (Areas of uncertainty).
 - **Implementer** — operational cost, hand-waves, hidden cost, edge cases, ergonomic damage, ownership gaps.
 
-Conflicts between findings are detected and resolved by a fresh `reviewer-tech-writer` arbiter (with human escalation for unresolved conflicts via `AskUserQuestion`). `goals-author` is then re-invoked to revise `GOALS.md` in place, merging the form-fit findings into the **Departure candidates** and **Areas of uncertainty** sections that drive variation in the outline phase.
+Conflicts between findings are detected and resolved by a fresh `reviewer-tech-writer` arbiter (with human escalation for unresolved conflicts via `AskUserQuestion`). The `goals-author` skill is then re-invoked to revise `GOALS.md` in place, merging the form-fit findings into the **Departure candidates** and **Areas of uncertainty** sections that drive variation in the outline phase.
+
+`goals-author` is a skill rather than an agent because subagents cannot call `AskUserQuestion`. Skills invoked via the `Skill` tool run in the main conversation loop and therefore retain user-interaction tools — necessary for the discovery interview. The reviewer roles do not interact with the user and remain agents.
 
 **Inputs:** the consumer repo's `docs/authoring-guide.md` (the house voice); user interaction.
 **Outputs:** `GOALS.md`, `discovery-critique/`, `discovery-critique-dialog.md`.
@@ -128,13 +131,13 @@ The arbiter is always a **fresh** `reviewer-tech-writer` Agent call — even if 
 
 The workflow is implemented as **skills** (user-invocable via slash commands) and **agent specs** (role definitions that describe sub-agents). Agents define philosophy and outputs, not rigid procedures — this makes them flexible enough to recover from partial failures or be reinvoked.
 
-Skills reference agents by name; Claude matches agents to tasks based on their `name` and `description` frontmatter. Reviewer agents (`reviewer-substance`, `reviewer-implementer`) are dual-mode: the per-invocation prompt tells them whether they are reviewing `GOALS.md` (discovery mode) or the published draft (cold-read mode).
+Skills reference agents by name; Claude matches agents to tasks based on their `name` and `description` frontmatter. Reviewer agents (`reviewer-substance`, `reviewer-implementer`) are dual-mode: the per-invocation prompt tells them whether they are reviewing `GOALS.md` (discovery mode) or the published draft (cold-read mode). The `goals-author` skill is similarly mode-driven via per-invocation prompts (initial / refinement / revision).
 
 | Skill | Purpose | Agents Used |
 |-------|---------|-------------|
 | `workflow-resume` | Resume/re-enter in-progress workflow — assesses state, prompts user, loops `workflow-start` | (delegates to `workflow-start`) |
 | `workflow-start` | Full pipeline orchestrator — sequences the four stage skills, owns user-approval gates after discovery and outlining | (delegates to stage skills) |
-| `discover-standard` | Stage 1 — interview, write `GOALS.md`, three-lens critique, arbitrate, revise | `goals-author`, `reviewer-substance`, `reviewer-form-fit`, `reviewer-implementer`, `reviewer-tech-writer` (arbiter) |
+| `discover-standard` | Stage 1 — interview, write `GOALS.md`, three-lens critique, arbitrate, revise | sub-skill `goals-author`; agents `reviewer-substance`, `reviewer-form-fit`, `reviewer-implementer`, `reviewer-tech-writer` (arbiter) |
 | `outline-standard` | Stage 2 — three parallel outline variants, user compares, write `OUTLINE.md` | `outliner-principle`, `outliner-pragmatic`, `outliner-prescriptive` |
 | `draft-standard` | Stage 3 — single writer produces the standard | `writer` |
 | `review-standard` | Stage 4 — three-role parallel critique, arbitrate, goals-coverage pass, iterate with user | `reviewer-substance`, `reviewer-implementer`, `reviewer-tech-writer`, `reviewer-tech-writer` (arbiter) |
@@ -147,7 +150,7 @@ workflow-resume (resume/re-enter)
     ├── assesses .drafts/<topic>/ state, gathers user intent
     └── calls skill: workflow-start
         ├── calls skill: discover-standard
-        │   ├── uses agent: goals-author (interview + write GOALS.md, or refine)
+        │   ├── invokes skill: goals-author (interview + write GOALS.md, or refine)
         │   ├── uses agents (parallel): reviewer-substance
         │   │                            reviewer-form-fit
         │   │                            reviewer-implementer
@@ -155,7 +158,7 @@ workflow-resume (resume/re-enter)
         │   ├── (if conflicts) re-prompts conflicting reviewers in parallel
         │   ├── uses agent: reviewer-tech-writer (fresh, arbiter-resolve)
         │   ├── (if unresolved) escalates via AskUserQuestion
-        │   └── uses agent: goals-author (revision invocation)
+        │   └── invokes skill: goals-author (revision invocation)
         ├── presents revised GOALS.md to user for approval (AskUserQuestion)
         ├── calls skill: outline-standard
         │   ├── uses agents (parallel): outliner-principle
@@ -181,7 +184,7 @@ workflow-resume (resume/re-enter)
 
 ### Prerequisite Validation
 
-All agent prerequisites are validated via SubagentStart hooks (defined in `hooks/hooks.json`). The hooks call `scripts/validate-prerequisites.sh` to check that required files exist before the agent starts. The script resolves the active topic by locating the single `.drafts/<topic>/` directory; the workspace is branch-ephemeral so a single topic per branch is the norm. The stage skills also validate their own prerequisites before launching agents. Dual-mode reviewer-agent prereqs accept either discovery-stage inputs (`GOALS.md`) or draft-stage inputs (`standards/<topic>-standard.md`), so the same hook works for both contexts.
+Agent prerequisites are validated via SubagentStart hooks (defined in `hooks/hooks.json`). The hooks call `scripts/validate-prerequisites.sh` to check that required files exist before the agent starts. The script resolves the active topic by locating the single `.drafts/<topic>/` directory; the workspace is branch-ephemeral so a single topic per branch is the norm. Stage skills also validate their own prerequisites at entry; the `goals-author` skill (which is not an agent) validates its own prereqs as Step 1 of its body, since hooks only fire on subagent launch. Dual-mode reviewer-agent prereqs accept either discovery-stage inputs (`GOALS.md`) or draft-stage inputs (`standards/<topic>-standard.md`), so the same hook works for both contexts.
 
 ## Orchestrator Responsibilities
 
@@ -189,7 +192,7 @@ The `workflow-start` skill manages the full pipeline:
 
 1. **Status updates:** Provides brief updates to the user between major stages.
 2. **User-approval gates:** Presents the revised `GOALS.md` after discovery for approval before proceeding to outlining; the outlining gate is handled inside `/outline-standard` (variant comparison + user direction is the gate); no explicit gate after drafting (the user moves into `/review-standard` directly); review iteration runs inside `/review-standard`.
-3. **Escalation:** Surfaces unresolved issues to the user — discovery concerns `goals-author` couldn't address, outline ambiguity, writer-reported `OUTLINE.md` ↔ `GOALS.md` conflicts.
+3. **Escalation:** Surfaces unresolved issues to the user — discovery concerns the `goals-author` skill couldn't address, outline ambiguity, writer-reported `OUTLINE.md` ↔ `GOALS.md` conflicts.
 
 Stage-specific orchestration (parallel launch, arbitration, revision loops) is owned by the stage skills, not the top-level orchestrator. This keeps each stage skill self-contained for standalone use.
 
@@ -197,7 +200,7 @@ Stage-specific orchestration (parallel launch, arbitration, revision loops) is o
 
 This plugin defers to the consumer repo for the house voice and template:
 
-- `docs/authoring-guide.md` — the standard template, RFC 2119 conventions, file/section rules, and the principle-based house voice. Read by `goals-author` (for context), the outliners (as their default voice), the writer (as the structural template), and `reviewer-tech-writer` (as the conformance reference).
+- `docs/authoring-guide.md` — the standard template, RFC 2119 conventions, file/section rules, and the principle-based house voice. Read by the `goals-author` skill (for context), the outliners (as their default voice), the writer (as the structural template), and `reviewer-tech-writer` (as the conformance reference).
 - Device references — typically `docs/device-prescriptive.md` and `docs/device-risk-tiered.md` (or paths the authoring guide names). Define when and how to reach for the two devices the principle-based voice supports.
 - Example standards — for tone and depth calibration. Optional but useful.
 

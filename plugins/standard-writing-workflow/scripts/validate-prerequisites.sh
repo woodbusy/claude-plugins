@@ -44,8 +44,8 @@ check_file() {
 }
 
 # The consumer repo must define its house voice in docs/authoring-guide.md.
-# All four stage agents (goals-author, outliners, writer, reviewer-tech-writer)
-# read it, so we fail fast at every entry point if it's missing.
+# The goals-author skill and the outliner / writer / reviewer-tech-writer
+# agents all read it, so we fail fast at every entry point if it's missing.
 check_authoring_guide() {
   if [ ! -f "docs/authoring-guide.md" ]; then
     echo "ERROR: Required file 'docs/authoring-guide.md' not found. The standard-writing-workflow plugin expects the consumer repo to describe its house voice in docs/authoring-guide.md. Create that file (see plugins/standard-writing-workflow/docs/standard-writing-workflow.md for what it should contain) before running the workflow." >&2
@@ -55,9 +55,10 @@ check_authoring_guide() {
 
 case "$NAME" in
   goals-author)
-    # No artifact prerequisite — initial mode creates .drafts/<slug>/ from scratch.
-    # If a topic already exists, that's fine (refinement / revision modes).
-    # We do enforce the authoring guide, since goals-author reads it.
+    # Called from inside the goals-author skill body (Step 1). Not a SubagentStart
+    # hook entry. No artifact prerequisite — initial mode creates .drafts/<slug>/
+    # from scratch; refinement / revision modes operate on an existing topic.
+    # We do enforce the authoring guide, since the skill reads it for house-voice context.
     check_authoring_guide
     ;;
   outliner-principle | outliner-pragmatic | outliner-prescriptive)

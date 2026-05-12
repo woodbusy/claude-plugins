@@ -1,10 +1,10 @@
 # Goals-author refinement prompt template
 
-Sent to `goals-author` to refine an existing `GOALS.md` based on user direction (no critique findings involved — this is the "user wants to change something" path, separate from post-critique revision). The orchestrator substitutes `{{USER_DIRECTION}}` with the user's stated changes before sending.
+Sent to the goals-author skill (as `args` via the `Skill` tool) to refine an existing `GOALS.md` based on user direction (no critique findings involved — this is the "user wants to change something" path, separate from post-critique revision). The orchestrator substitutes `{{USER_DIRECTION}}` with the user's stated changes before sending.
 
 ---
 
-Refine the existing `.drafts/<topic>/GOALS.md` based on the user's direction below. The standard's substance has already been captured in a prior pass; this run is a targeted refinement.
+Run in **refinement mode**. Refine the existing `.drafts/<topic>/GOALS.md` based on the user's direction below. The standard's substance has already been captured in a prior pass; this run is a targeted refinement.
 
 ## Inputs to read
 

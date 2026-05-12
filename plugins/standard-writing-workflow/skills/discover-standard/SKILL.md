@@ -9,7 +9,7 @@ Produces and refines `.drafts/<topic>/GOALS.md` — the specification that drive
 
 The standards in this repo share one voice — principle-based by default, with prescriptive and risk-tiered devices used sparingly. Discovery's job is two-fold: nail the substance, and surface where this particular standard will want to depart from the principle-based default so the outline phase can vary intentionally.
 
-The reviewer agents are pure role definitions. The per-invocation task — that this is a discovery critique, not a draft critique — is supplied by the prompt templates under `prompts/`. Whenever this skill says "send the *<name>* prompt to <agent>", read that template, substitute the listed placeholders, and pass the result as the Agent prompt.
+The reviewer agents and the goals-author skill are pure role definitions. The per-invocation task — that this is a discovery critique, not a draft critique; that goals-author should run in initial / refinement / revision mode — is supplied by the prompt templates under `prompts/`. Whenever this skill says "send the *<name>* prompt to <agent>", read that template, substitute the listed placeholders, and pass the result as the Agent prompt. When it says "send the *<name>* prompt to the **goals-author skill**", do the same but invoke via the `Skill` tool with the substituted prompt as `args` — goals-author runs in the main loop so it can interview the user via `AskUserQuestion`.
 
 ## Workspace
 
@@ -29,15 +29,15 @@ All under `${CLAUDE_PLUGIN_ROOT}/skills/discover-standard/prompts/`:
 
 | Template | Purpose | Placeholders |
 |----------|---------|--------------|
-| `goals-initial.md` | Tell `goals-author` to interview and write `GOALS.md` from scratch | none |
-| `goals-refine.md` | Re-invoke `goals-author` to refine an existing `GOALS.md` per user direction | `{{USER_DIRECTION}}` |
+| `goals-initial.md` | Tell the goals-author skill to interview and write `GOALS.md` from scratch | none |
+| `goals-refine.md` | Re-invoke the goals-author skill to refine an existing `GOALS.md` per user direction | `{{USER_DIRECTION}}` |
 | `critique-substance.md` | Initial discovery critique by `reviewer-substance` | none |
 | `critique-form-fit.md` | Initial discovery critique by `reviewer-form-fit` | none |
 | `critique-implementer.md` | Initial discovery critique by `reviewer-implementer` | none |
 | `arbiter-detect.md` | Inspect the round's findings for conflicts | `{{ROUND_FINDINGS}}` |
 | `conflict-response.md` | Reviewer defends/revises/concedes a conflicting finding | `{{CONFLICT_BLOCKS}}` |
 | `arbiter-resolve.md` | Arbiter declares each conflict resolved/unresolved after responses | `{{ARBITRATION_OUTPUT}}`, `{{CONFLICT_RESPONSES}}` |
-| `goals-revise.md` | `goals-author` revises GOALS.md in response to findings + directives | `{{ROUND_FINDINGS}}`, `{{ARBITRATION_DIRECTIVES}}` |
+| `goals-revise.md` | Goals-author skill revises GOALS.md in response to findings + directives | `{{ROUND_FINDINGS}}`, `{{ARBITRATION_DIRECTIVES}}` |
 
 The arbiter is always a **fresh `reviewer-tech-writer` invocation** — even though `reviewer-tech-writer` does not participate as a reviewer in discovery, it serves as the always-on arbiter for both critique sub-flows.
 
@@ -51,8 +51,8 @@ Run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh discover-stand
 
 Locate the active `.drafts/<topic>/` directory.
 
-- **If `.drafts/<topic>/GOALS.md` does NOT exist:** Send the **`goals-initial.md`** prompt to `goals-author`. The agent will interview the user and write `GOALS.md`. (It chooses the slug as part of the interview.)
-- **If `.drafts/<topic>/GOALS.md` exists** and the user invoked the skill to refine it: Ask the user what they want to change, then send the **`goals-refine.md`** prompt to `goals-author` with `{{USER_DIRECTION}}` substituted.
+- **If `.drafts/<topic>/GOALS.md` does NOT exist:** Send the **`goals-initial.md`** prompt to the **goals-author skill** (invoke via the `Skill` tool with the prompt as `args`). The skill will interview the user and write `GOALS.md`. (It chooses the slug as part of the interview.)
+- **If `.drafts/<topic>/GOALS.md` exists** and the user invoked this skill to refine it: Ask the user what they want to change, then send the **`goals-refine.md`** prompt to the **goals-author skill** with `{{USER_DIRECTION}}` substituted.
 
 Confirm `GOALS.md` was written. If the user only wanted refinement and not another critique, stop here and report.
 
@@ -87,9 +87,9 @@ When the sub-flow returns, all conflicts (if any) have been resolved with a reco
 
 ### Step 5: Revise
 
-Re-invoke `goals-author` with the **`goals-revise.md`** prompt. Substitute `{{ROUND_FINDINGS}}` with the round's findings and `{{ARBITRATION_DIRECTIVES}}` with any Resolution Directives or Human Decisions recorded in `discovery-critique-dialog.md` (or "(none)" if no conflicts surfaced). Pass `.drafts/<topic>/discovery-critique-dialog.md` to the agent for full context.
+Re-invoke the **goals-author skill** with the **`goals-revise.md`** prompt as `args` (via the `Skill` tool). Substitute `{{ROUND_FINDINGS}}` with the round's findings and `{{ARBITRATION_DIRECTIVES}}` with any Resolution Directives or Human Decisions recorded in `discovery-critique-dialog.md` (or "(none)" if no conflicts surfaced). Reference `.drafts/<topic>/discovery-critique-dialog.md` in the args so the skill knows where to read full context.
 
-`goals-author` edits `GOALS.md` in place (merging form-fit findings into **Departure candidates** and **Areas of uncertainty** along the way) and returns a revision summary.
+The goals-author skill edits `GOALS.md` in place (merging form-fit findings into **Departure candidates** and **Areas of uncertainty** along the way) and returns a revision summary.
 
 Append the revision summary to the dialog file:
 
@@ -103,14 +103,14 @@ Append the revision summary to the dialog file:
 Report to the user:
 - Which reviewers found issues and which approved cleanly
 - Whether any conflicts were arbitrated, and how they were resolved (auto-resolved by arbiter vs. escalated to human)
-- Summary of revisions made by `goals-author`
+- Summary of revisions made by the goals-author skill
 - Any remaining concerns the agent could not address (rare; flag if present)
 
 Tell the user that `GOALS.md` is ready for `/outline-standard` (unless they want another iteration; re-running this skill on an existing `GOALS.md` is cheap).
 
 ## Arbitration Sub-flow
 
-This sub-flow runs after the parallel critique produces findings, before `goals-author` is re-invoked. Goal: detect conflicts between reviewers' findings, drive them to convergence with one targeted re-prompt, and escalate to the human if convergence fails.
+This sub-flow runs after the parallel critique produces findings, before the goals-author skill is re-invoked for revision. Goal: detect conflicts between reviewers' findings, drive them to convergence with one targeted re-prompt, and escalate to the human if convergence fails.
 
 The sub-flow appends sections to the active round in `.drafts/<topic>/discovery-critique-dialog.md`.
 
@@ -151,7 +151,7 @@ Append the arbiter's verdict:
 [Arbiter's per-conflict Resolved/Unresolved verdicts and directives]
 ```
 
-If every conflict is **Resolved**, the sub-flow is complete. The Resolution Directives are what `goals-author` should follow for those findings.
+If every conflict is **Resolved**, the sub-flow is complete. The Resolution Directives are what the goals-author skill should follow for those findings.
 
 ### Sub-step D: Escalate Unresolved Conflicts
 
@@ -167,4 +167,4 @@ Append the user's decisions:
 **Conflict 1:** [user's choice or free-form text, attributed to the user]
 ```
 
-Human Decisions are authoritative for `goals-author` — they take precedence over the original findings and reviewer responses on the conflicting items.
+Human Decisions are authoritative for the goals-author skill — they take precedence over the original findings and reviewer responses on the conflicting items.

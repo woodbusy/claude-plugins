@@ -1,10 +1,10 @@
 # Goals-author initial prompt template
 
-Sent to `goals-author` to interview the user and write `GOALS.md` for a new standard.
+Sent to the goals-author skill (as `args` via the `Skill` tool) to interview the user and write `GOALS.md` for a new standard. Run in **initial mode**.
 
 ---
 
-Interview the user to discover the goals and scope of a new technical standard, then write `.drafts/<slug>/GOALS.md`. You choose the slug (a pithy kebab-case name like `magic-link-security`) as part of the interview; confirm it with the user before writing.
+Run in **initial mode**. Interview the user to discover the goals and scope of a new technical standard, then write `.drafts/<slug>/GOALS.md`. You choose the slug (a pithy kebab-case name like `magic-link-security`) as part of the interview; confirm it with the user before writing.
 
 ## Inputs to read
 

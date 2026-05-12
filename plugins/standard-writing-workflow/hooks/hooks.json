@@ -2,15 +2,6 @@
   "hooks": {
     "SubagentStart": [
       {
-        "matcher": "goals-author",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh goals-author"
-          }
-        ]
-      },
-      {
         "matcher": "outliner-principle",
         "hooks": [
           {
