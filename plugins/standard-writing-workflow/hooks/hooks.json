@@ -1,0 +1,87 @@
+{
+  "hooks": {
+    "SubagentStart": [
+      {
+        "matcher": "goals-author",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh goals-author"
+          }
+        ]
+      },
+      {
+        "matcher": "outliner-principle",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh outliner-principle"
+          }
+        ]
+      },
+      {
+        "matcher": "outliner-pragmatic",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh outliner-pragmatic"
+          }
+        ]
+      },
+      {
+        "matcher": "outliner-prescriptive",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh outliner-prescriptive"
+          }
+        ]
+      },
+      {
+        "matcher": "writer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh writer"
+          }
+        ]
+      },
+      {
+        "matcher": "reviewer-substance",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-substance"
+          }
+        ]
+      },
+      {
+        "matcher": "reviewer-form-fit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-form-fit"
+          }
+        ]
+      },
+      {
+        "matcher": "reviewer-implementer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-implementer"
+          }
+        ]
+      },
+      {
+        "matcher": "reviewer-tech-writer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-prerequisites.sh reviewer-tech-writer"
+          }
+        ]
+      }
+    ]
+  }
+}

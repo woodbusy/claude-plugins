@@ -14,6 +14,11 @@
       "name": "issue-tracking-github",
       "source": "./plugins/issue-tracking-github",
       "description": "Issue tracking with GitHub issues"
+    },
+    {
+      "name": "standard-writing-workflow",
+      "source": "./plugins/standard-writing-workflow",
+      "description": "Authoring workflow for technical standards"
     }
   ]
 }
