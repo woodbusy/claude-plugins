@@ -1,7 +1,7 @@
 ---
 name: pr-author
 description: Creates a draft PR with a reviewer-friendly description distilled from the implementation guide. Launched by workflow-start.
-tools: Read, Write, Grep, Glob
+tools: Read, Write, Grep, Glob, Bash
 model: haiku
 color: blue
 ---
