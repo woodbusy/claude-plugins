@@ -6,9 +6,9 @@
   },
   "plugins": [
     {
-      "name": "agent-workflow",
-      "source": "./plugins/agent-workflow",
-      "description": "Agentic workflow"
+      "name": "dev-workflow",
+      "source": "./plugins/dev-workflow",
+      "description": "Agentic development workflow"
     },
     {
       "name": "issue-tracking-github",
